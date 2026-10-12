@@ -1,23 +1,22 @@
 package com.openAI.firstProject.service;
 
 import com.openAI.firstProject.dto.ResponseDTO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class AiServiceImpl implements AiService {
 
     private final ChatClient chatClient;
-
-    public AiServiceImpl(ChatClient.Builder chatClientBuilder) {
-        this.chatClient = chatClientBuilder.build();
-    }
 
     @Override
     public List<ResponseDTO> chat(String query) {
@@ -26,6 +25,9 @@ public class AiServiceImpl implements AiService {
                 .prompt()
                 .system("Answer in short and crips way")
                 .user(query)
+//                .options(OpenAiChatOptions.builder()
+//                        .model("gpt-5-nano")
+//                        .temperature(1.0))
                 .call()
                 .entity(new ParameterizedTypeReference<List<ResponseDTO>>() {});
     }

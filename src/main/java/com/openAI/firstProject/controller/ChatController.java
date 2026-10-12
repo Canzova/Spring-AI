@@ -21,7 +21,6 @@ public class ChatController {
         this.aiService = aiService;
     }
 
-
     @GetMapping("/chat")
     public ResponseEntity<List<ResponseDTO>> chat(@RequestParam(value = "prompt", required = false) String prompt){
         List<ResponseDTO>response = aiService.chat(prompt);
