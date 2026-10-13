@@ -6,6 +6,5 @@ import java.util.List;
 
 public interface AiService {
 
-    public List<ResponseDTO> chat(String query);
-
+    List<ResponseDTO> chat(int count, String field, String sentenceCount);
 }

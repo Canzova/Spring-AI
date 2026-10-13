@@ -11,8 +11,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ResponseDTO {
 
-    private String title;
-    private String content;
+    private String name;
+    private String about;
     private String born;
 
 }

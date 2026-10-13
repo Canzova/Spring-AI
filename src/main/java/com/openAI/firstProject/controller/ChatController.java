@@ -22,8 +22,10 @@ public class ChatController {
     }
 
     @GetMapping("/chat")
-    public ResponseEntity<List<ResponseDTO>> chat(@RequestParam(value = "prompt", required = false) String prompt){
-        List<ResponseDTO>response = aiService.chat(prompt);
+    public ResponseEntity<List<ResponseDTO>> chat(@RequestParam(defaultValue = "2", required = false, name = "count") int count,
+                                                  @RequestParam(defaultValue = "cricket", required = false, name = "field") String field,
+                                                  @RequestParam(defaultValue = "2", required = false, name = "sentenceCount") String sentenceCount) {
+        List<ResponseDTO>response = aiService.chat(count, field, sentenceCount);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

@@ -2,15 +2,19 @@ package com.openAI.firstProject.service;
 
 import com.openAI.firstProject.dto.ResponseDTO;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.metadata.ChatResponseMetadata;
-import org.springframework.ai.chat.metadata.Usage;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.chat.prompt.SystemPromptTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -18,40 +22,61 @@ public class AiServiceImpl implements AiService {
 
     private final ChatClient chatClient;
 
+    @Value("classpath:/prompts/systemPrompt.st")
+    private Resource systemPrompt;
+
+    @Value("classpath:/prompts/userPrompt.st")
+    private Resource userPrompt;
+
     @Override
-    public List<ResponseDTO> chat(String query) {
-//        chat2(query);
+    public List<ResponseDTO> chat(int count, String field, String sentenceCount) {
+//        return usingPromptTemplates(count, field, sentenceCount);
+//        return usingFastApis(count, field, sentenceCount);
+        return usingPromptFiles(count, field, sentenceCount);
+
+    }
+
+    private List<ResponseDTO> usingPromptFiles(int count, String field, String sentenceCount) {
+        PromptTemplate userPromptTemplate = new PromptTemplate(userPrompt);
+        PromptTemplate systemPromptTemplate = new SystemPromptTemplate(systemPrompt);
+
+        Message userMessage = userPromptTemplate.createMessage(Map.of("count", count, "field", field));
+        Message systemMessage = systemPromptTemplate.createMessage(Map.of("sentenceCount", sentenceCount, "field", field));
+
+        Prompt prompt = new Prompt(userMessage, systemMessage);
+
+        return chatClient
+                .prompt(prompt)
+                .call()
+                .entity(new ParameterizedTypeReference<List<ResponseDTO>>() {
+                });
+    }
+
+    private List<ResponseDTO> usingFastApis(int count, String field, String sentenceCount) {
         return chatClient
                 .prompt()
-                .system("Answer in short and crips way")
-                .user(query)
-//                .options(OpenAiChatOptions.builder()
-//                        .model("gpt-5-nano")
-//                        .temperature(1.0))
+                .user(userMessage -> userMessage.text("Tell me top {count} achievers in filed of {field}")
+                        .params(Map.of("count", count, "field", field)))
+                .system(systemMessage -> systemMessage.text("You are an expert in filed of {field}, answer only in {sentenceCount} sentences")
+                        .params(Map.of("sentenceCount", sentenceCount, "field", field)))
                 .call()
-                .entity(new ParameterizedTypeReference<List<ResponseDTO>>() {});
+                .entity(new ParameterizedTypeReference<List<ResponseDTO>>() {
+                });
     }
-//
-//    public void chat2(String query) {
-//        ChatResponse chatResponse = chatClient
-//                .prompt()
-//                .system("Answer in short and crips way")
-//                .user(query)
-//                .call()
-//                .chatResponse();
-//
-//        String res = chatResponse.getResult().getOutput().getText();
-//        System.out.println(res);
-//
-//         ChatResponseMetadata metadata = chatResponse.getMetadata();
-//         Usage usage = metadata.getUsage();
-//
-//         System.out.println(usage.getPromptTokens());
-//         System.out.println(usage.getTotalTokens());
-//         System.out.println(usage.getCompletionTokens());
-//
-//        System.out.println(metadata.getModel());
-//        System.out.println(metadata.getPromptMetadata());
-//    }
 
+    private List<ResponseDTO> usingPromptTemplates(int count, String field, String sentenceCount) {
+        PromptTemplate userPromptTemplate = new PromptTemplate("Tell me top {count} achievers in filed of {field}");
+        PromptTemplate systemPromptTemplate = new SystemPromptTemplate("You are an expert in filed of {field}, answer only in {sentenceCount} sentences");
+
+        Message userMessage = userPromptTemplate.createMessage(Map.of("count", count, "field", field));
+        Message systemMessage = systemPromptTemplate.createMessage(Map.of("sentenceCount", sentenceCount, "field", field));
+
+        Prompt prompt = new Prompt(userMessage, systemMessage);
+
+        return chatClient
+                .prompt(prompt)
+                .call()
+                .entity(new ParameterizedTypeReference<List<ResponseDTO>>() {
+                });
+    }
 }
