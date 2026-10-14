@@ -2,7 +2,6 @@ package com.openAI.firstProject.service;
 
 import com.openAI.firstProject.dto.ResponseDTO;
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -31,8 +30,8 @@ public class AiServiceImpl implements AiService {
     @Override
     public List<ResponseDTO> chat(int count, String field, String sentenceCount) {
 //        return usingPromptTemplates(count, field, sentenceCount);
-//        return usingFastApis(count, field, sentenceCount);
-        return usingPromptFiles(count, field, sentenceCount);
+        return usingFastApis(count, field, sentenceCount);
+//        return usingPromptFiles(count, field, sentenceCount);
 
     }
 
@@ -59,6 +58,7 @@ public class AiServiceImpl implements AiService {
                         .params(Map.of("count", count, "field", field)))
                 .system(systemMessage -> systemMessage.text("You are an expert in filed of {field}, answer only in {sentenceCount} sentences")
                         .params(Map.of("sentenceCount", sentenceCount, "field", field)))
+//                .advisors(new SimpleLoggerAdvisor(), new SafeGuardAdvisor(List.of("body")))
                 .call()
                 .entity(new ParameterizedTypeReference<List<ResponseDTO>>() {
                 });
