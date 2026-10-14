@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,11 @@ public class AiServiceImpl implements AiService {
         return usingFastApis(count, field, sentenceCount);
 //        return usingPromptFiles(count, field, sentenceCount);
 
+    }
+
+    @Override
+    public Flux<String> streamingChat(String query) {
+        return chatClient.prompt(query).stream().content();
     }
 
     private List<ResponseDTO> usingPromptFiles(int count, String field, String sentenceCount) {

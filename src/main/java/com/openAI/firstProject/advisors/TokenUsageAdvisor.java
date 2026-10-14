@@ -31,7 +31,7 @@ public class TokenUsageAdvisor implements CallAdvisor, StreamAdvisor {
 
     @Override
     public Flux<ChatClientResponse> adviseStream(ChatClientRequest chatClientRequest, StreamAdvisorChain streamAdvisorChain) {
-        return null;
+        return streamAdvisorChain.nextStream(chatClientRequest);
     }
 
     @Override

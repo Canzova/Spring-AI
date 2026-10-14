@@ -21,8 +21,9 @@ public class AIConfig {
                 .defaultAdvisors(new TokenUsageAdvisor(), new SimpleLoggerAdvisor(), new SafeGuardAdvisor(List.of("body")))
                 .defaultOptions(OpenAiChatOptions.builder()
                         .model("gpt-5-nano")
-                        .temperature(1.0))
-//                        .maxCompletionTokens(1000))
+                        .reasoningEffort("minimal")
+//                        .temperature(1.0))
+                        .maxCompletionTokens(500))
                 .build();
     }
 }
