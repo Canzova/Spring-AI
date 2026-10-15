@@ -2,7 +2,6 @@ package com.openAI.firstProject.controller;
 
 import com.openAI.firstProject.dto.ResponseDTO;
 import com.openAI.firstProject.service.AiService;
-import okhttp3.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,5 +34,11 @@ public class ChatController {
     public ResponseEntity<Flux<String>>streamingChat(@RequestParam(name = "query", required = false, defaultValue = "tell me about 7 wonders of India") String query
     ){
         return new ResponseEntity<>(aiService.streamingChat(query), HttpStatus.OK);
+    }
+
+    @GetMapping("/memory-chat")
+    public ResponseEntity<String>memoryChat(@RequestParam(name = "query", required = false, defaultValue = "tell me about 7 wonders of India") String query
+    ){
+        return new ResponseEntity<>(aiService.memoryChat(query), HttpStatus.OK);
     }
 }

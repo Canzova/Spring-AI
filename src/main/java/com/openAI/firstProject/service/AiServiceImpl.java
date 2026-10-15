@@ -3,6 +3,7 @@ package com.openAI.firstProject.service;
 import com.openAI.firstProject.dto.ResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -40,6 +41,13 @@ public class AiServiceImpl implements AiService {
     public Flux<String> streamingChat(String query) {
         return chatClient.prompt(query).stream().content();
     }
+
+    @Override
+    public String memoryChat(String query) {
+        // Here i am passing the conv Id as "abc" but in real system con id is determined form userid and session
+        return chatClient.prompt(query).advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "abc")).call().content();
+    }
+
 
     private List<ResponseDTO> usingPromptFiles(int count, String field, String sentenceCount) {
         PromptTemplate userPromptTemplate = new PromptTemplate(userPrompt);

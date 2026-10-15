@@ -10,4 +10,6 @@ public interface AiService {
     List<ResponseDTO> chat(int count, String field, String sentenceCount);
 
     Flux<String> streamingChat(String query);
+
+    String memoryChat(String query);
 }
