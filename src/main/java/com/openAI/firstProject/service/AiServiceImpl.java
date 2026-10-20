@@ -8,6 +8,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
+import org.springframework.ai.document.Document;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.Resource;
@@ -22,6 +23,7 @@ import java.util.Map;
 public class AiServiceImpl implements AiService {
 
     private final ChatClient chatClient;
+    private final VectorService vectorService;
 
     @Value("classpath:/prompts/systemPrompt.st")
     private Resource systemPrompt;
@@ -69,13 +71,30 @@ public class AiServiceImpl implements AiService {
         return chatClient
                 .prompt()
                 .user(userMessage -> userMessage.text("Tell me top {count} achievers in filed of {field}")
-                        .params(Map.of("count", count, "field", field)))
+                        .params(Map.of("count", count, "field", field )))
                 .system(systemMessage -> systemMessage.text("You are an expert in filed of {field}, answer only in {sentenceCount} sentences")
                         .params(Map.of("sentenceCount", sentenceCount, "field", field)))
 //                .advisors(new SimpleLoggerAdvisor(), new SafeGuardAdvisor(List.of("body")))
                 .call()
                 .entity(new ParameterizedTypeReference<List<ResponseDTO>>() {
                 });
+    }
+
+    @Override
+    public String usingFastApisWithVectors(String query) {
+
+        List<Document>documentList = vectorService.getData(query);
+        List<String> documentStringList = documentList.stream().map(doc -> doc.getText()).toList();
+        String doc = String.join(",", documentStringList);
+
+        return chatClient
+                .prompt()
+                .user(userMessage -> userMessage.text(query))
+                .system(systemMessage -> systemMessage.text(systemPrompt).params(Map.of("document", doc)))
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "abc"))
+                //                .advisors(new SimpleLoggerAdvisor(), new SafeGuardAdvisor(List.of("body")))
+                .call()
+                .content();
     }
 
     private List<ResponseDTO> usingPromptTemplates(int count, String field, String sentenceCount) {
