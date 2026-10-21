@@ -3,12 +3,15 @@ package com.openAI.firstProject.service;
 import com.openAI.firstProject.dto.ResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.Resource;
@@ -24,6 +27,7 @@ public class AiServiceImpl implements AiService {
 
     private final ChatClient chatClient;
     private final VectorService vectorService;
+    private final VectorStore vectorStore;
 
     @Value("classpath:/prompts/systemPrompt.st")
     private Resource systemPrompt;
@@ -83,16 +87,19 @@ public class AiServiceImpl implements AiService {
     @Override
     public String usingFastApisWithVectors(String query) {
 
-        List<Document>documentList = vectorService.getData(query);
-        List<String> documentStringList = documentList.stream().map(doc -> doc.getText()).toList();
-        String doc = String.join(",", documentStringList);
-
         return chatClient
                 .prompt()
                 .user(userMessage -> userMessage.text(query))
-                .system(systemMessage -> systemMessage.text(systemPrompt).params(Map.of("document", doc)))
+                .advisors(QuestionAnswerAdvisor
+                        .builder(vectorStore)
+                        .searchRequest(SearchRequest
+                                .builder()
+                                .topK(3)
+                                .similarityThreshold(0.6)
+                                .build())
+                        .build())
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "abc"))
-                //                .advisors(new SimpleLoggerAdvisor(), new SafeGuardAdvisor(List.of("body")))
+//                                .advisors(new SimpleLoggerAdvisor(), new SafeGuardAdvisor(List.of("body")))
                 .call()
                 .content();
     }
