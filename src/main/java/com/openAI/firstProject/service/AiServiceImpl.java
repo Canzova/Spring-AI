@@ -10,6 +10,13 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
+import org.springframework.ai.rag.preretrieval.query.expansion.MultiQueryExpander;
+import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.rag.preretrieval.query.transformation.CompressionQueryTransformer;
+import org.springframework.ai.rag.preretrieval.query.transformation.RewriteQueryTransformer;
+import org.springframework.ai.rag.preretrieval.query.transformation.TranslationQueryTransformer;
+import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +41,9 @@ public class AiServiceImpl implements AiService {
 
     @Value("classpath:/prompts/userPrompt.st")
     private Resource userPrompt;
+
+    @Value("classpath:/prompts/multiQueryExpander.st")
+    private Resource multiQueryExpanderPrompt;
 
     @Override
     public List<ResponseDTO> chat(int count, String field, String sentenceCount) {
@@ -87,18 +97,54 @@ public class AiServiceImpl implements AiService {
     @Override
     public String usingFastApisWithVectors(String query) {
 
+        var advisor = RetrievalAugmentationAdvisor.builder()
+                // Pre-retrival
+                .queryTransformers(
+                        // Compress the user-hostory and prompt
+                        CompressionQueryTransformer.builder()
+                                .chatClientBuilder(chatClient.mutate().clone())
+                                .build(),
+
+                        // Rewrite the query to make it more effecient
+                        RewriteQueryTransformer.builder()
+                                .chatClientBuilder(chatClient.mutate().clone())
+                                .build(),
+
+                        // Translate it into english is the prompt is in another language
+                        TranslationQueryTransformer.builder()
+                                .chatClientBuilder(chatClient.mutate().clone())
+                                .targetLanguage("english")
+                                .build()
+                )
+
+                .queryExpander(
+                        MultiQueryExpander.builder()
+                                .chatClientBuilder(chatClient.mutate().defaultAdvisors(List.of()))
+                                .includeOriginal(true)
+                                .numberOfQueries(3)
+                                .promptTemplate(new PromptTemplate(multiQueryExpanderPrompt))
+                                .build()
+                )
+
+                //Retrival
+                .documentRetriever(
+                        // Retrive the documents form the resouce or vector db
+                        VectorStoreDocumentRetriever.builder()
+                                .topK(3)
+                                .similarityThreshold(0.4)
+                                .vectorStore(vectorStore)
+                                .build()
+                )
+                // You can also use document joiner
+
+                // Post- retrival ---> .documentPostProcessor you have to create an implementation of it
+
+                .build();
+
         return chatClient
                 .prompt()
                 .user(userMessage -> userMessage.text(query))
-                .advisors(QuestionAnswerAdvisor
-                        .builder(vectorStore)
-                        .searchRequest(SearchRequest
-                                .builder()
-                                .topK(3)
-                                .similarityThreshold(0.6)
-                                .build())
-                        .build())
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "abc"))
+                .advisors(advisor)
 //                                .advisors(new SimpleLoggerAdvisor(), new SafeGuardAdvisor(List.of("body")))
                 .call()
                 .content();

@@ -36,7 +36,7 @@ public class AIConfig {
     public ChatClient openAiChatClient(OpenAiChatModel openAiChatModel, ChatMemory chatMemory) {
         return ChatClient
                 .builder(openAiChatModel)
-                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build(), new TokenUsageAdvisor(), new SimpleLoggerAdvisor(), new SafeGuardAdvisor(List.of("body")))
+                .defaultAdvisors(new TokenUsageAdvisor(), new SimpleLoggerAdvisor(), new SafeGuardAdvisor(List.of("body")))
                 .defaultOptions(OpenAiChatOptions.builder()
                         .model("gpt-5-nano")
                         .reasoningEffort("minimal")

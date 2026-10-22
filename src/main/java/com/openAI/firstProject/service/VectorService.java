@@ -1,6 +1,7 @@
 package com.openAI.firstProject.service;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore; // ✅ correct
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class VectorService {
 
     private final VectorStore vectorStore;
@@ -135,11 +137,13 @@ public class VectorService {
     }
 
     public void saveDocument() {
+        log.info("Saving document : {}", documents);
         vectorStore.add(this.documents);
     }
 
     public List<Document> getData(String query){
         List<Document> results = vectorStore.similaritySearch(SearchRequest.builder().query(query).topK(5).similarityThreshold(0.6).build());
+        log.info("similarity search results: " + results);
         return results;
     }
 }
