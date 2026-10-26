@@ -1,6 +1,8 @@
 package com.openAI.firstProject.service;
 
+import com.ethlo.time.DateTime;
 import com.openAI.firstProject.dto.ResponseDTO;
+import com.openAI.firstProject.tools.DateTimeTool;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
@@ -55,7 +57,11 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public Flux<String> streamingChat(String query) {
-        return chatClient.prompt(query).stream().content();
+        return chatClient
+                .prompt(query)
+                .tools(new DateTimeTool())
+                .stream()
+                .content();
     }
 
     @Override
